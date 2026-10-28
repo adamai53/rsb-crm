@@ -1,0 +1,58 @@
+<aside class="side">
+  <div class="brand">
+    <img src="assets/logo-rsb.png" alt="">
+    <div><b>Red Sea Bunkering</b><small>CRM commercial</small></div>
+  </div>
+  @for (group of nav(); track group.label) {
+    <div class="nav-group">{{ group.label }}</div>
+    @for (item of group.items; track item.path) {
+      <a class="nav-btn" [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"
+         [attr.aria-current]="rla.isActive ? 'page' : null">
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  }
+</aside>
+
+<div class="col">
+  <header class="top">
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="search" placeholder="Rechercher un contact, un navire, une entreprise…" autocomplete="off"
+             aria-label="Recherche globale" disabled>
+    </div>
+    <div class="top-spacer"></div>
+    <div class="menu-wrap">
+      <button class="btn primary" type="button" aria-haspopup="true" [attr.aria-expanded]="menu() === 'create'"
+              (click)="toggle('create')">+ Créer</button>
+      <div class="menu" [hidden]="menu() !== 'create'">
+        <button type="button" disabled>Contact</button>
+        <button type="button" disabled>Entreprise</button>
+        <button type="button" disabled>Transaction (demande de soutage)</button>
+        <button type="button" disabled>Tâche</button>
+      </div>
+    </div>
+    @if (user(); as u) {
+      <div class="menu-wrap">
+        <button class="who who-btn" type="button" aria-haspopup="true" [attr.aria-expanded]="menu() === 'user'"
+                [attr.aria-label]="'Menu de ' + u.firstName + ' ' + u.lastName" (click)="toggle('user')">
+          <span class="av">{{ u.initials }}</span><span>{{ u.firstName }} {{ u.lastName.charAt(0) }}.</span>
+        </button>
+        <div class="menu user-menu" [hidden]="menu() !== 'user'">
+          <div class="user-menu-head">
+            <b>{{ u.firstName }} {{ u.lastName }}</b>
+            <span class="muted">{{ roleLabel() }}</span>
+          </div>
+          <a routerLink="/profile" (click)="menu.set(null)">Mon profil</a>
+          @if (u.role === 'ADMIN') {
+            <a routerLink="/admin" (click)="menu.set(null)">Administration</a>
+          }
+          <button type="button" (click)="auth.logout()">Se déconnecter</button>
+        </div>
+      </div>
+    }
+  </header>
+  <main id="main">
+    <router-outlet />
+  </main>
+</div>

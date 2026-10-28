@@ -1,0 +1,4 @@
+deploy/.env
+.env
+*.log
+.DS_Store

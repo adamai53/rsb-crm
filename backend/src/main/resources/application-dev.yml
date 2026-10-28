@@ -1,0 +1,9 @@
+# Profil de développement local : Swagger ouvert, logs SQL lisibles
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+logging:
+  level:
+    dj.redseabunkering: DEBUG

@@ -1,0 +1,71 @@
+# Environnement de développement complet :
+#   docker compose -f deploy/docker-compose.dev.yml up -d --build
+# Application : http://localhost:8081 · API : http://localhost:8080 · Mailpit : http://localhost:8025
+name: rsb-crm-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rsbcrm
+      POSTGRES_USER: rsbcrm
+      POSTGRES_PASSWORD: rsbcrm
+      TZ: Africa/Djibouti
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rsbcrm -d rsbcrm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+    restart: unless-stopped
+
+  backend:
+    build: ../backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: rsbcrm
+      POSTGRES_USER: rsbcrm
+      POSTGRES_PASSWORD: rsbcrm
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      APP_PUBLIC_URL: http://localhost:8081
+      CORS_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:8081
+      APP_SEED_DEMO: "true"
+      # Valeurs de développement uniquement (jamais en production)
+      JWT_SECRET: dev-only-secret-change-me-0123456789abcdef
+      APP_ADMIN_EMAIL: admin@rsb.local
+      APP_ADMIN_PASSWORD: AdminRsb2026
+      APP_SIGNUP_REQUIRES_APPROVAL: "true"
+      APP_COOKIE_SECURE: "false"
+      MAIL_FROM: crm@redseabunkering.com
+      TZ: Africa/Djibouti
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ../frontend
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

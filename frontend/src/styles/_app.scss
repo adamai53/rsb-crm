@@ -1,0 +1,71 @@
+/* Compléments à la charte du prototype : pages publiques, formulaires, menu utilisateur. */
+
+/* ---------- Champs ---------- */
+.fld input[aria-invalid="true"], .fld select[aria-invalid="true"] { border-color: var(--bad); background: var(--surface); }
+.fld input:focus, .fld select:focus, .fld textarea:focus { background: var(--surface); border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px var(--sea-soft); }
+.fld-err { font-style: normal; font-size: 12px; color: var(--bad); }
+.fld-hint { font-size: 12px; color: var(--faint); }
+.fld-row { display: flex; justify-content: space-between; gap: 8px; }
+.fld-row a { color: var(--sea); font-weight: 500; text-decoration: none; }
+.fld-row a:hover { text-decoration: underline; }
+.form-stack { display: flex; flex-direction: column; gap: 12px; }
+.form-actions { margin-top: 18px; justify-content: flex-end; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ---------- Pages publiques ---------- */
+.auth {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 40px 16px;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, var(--sea-soft), transparent 70%),
+    var(--bg);
+}
+.auth-card {
+  width: min(440px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow), inset 0 3px 0 var(--blue);
+  padding: 28px 28px 24px;
+}
+.auth-brand { display: flex; gap: 12px; align-items: center; padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.auth-brand b { display: block; font-family: var(--f-brand); font-size: 16px; font-weight: 700; letter-spacing: .02em; }
+.auth-brand small { font-size: 12px; color: var(--muted); }
+.auth-card h1 { font-size: 26px; font-weight: 700; line-height: 1.1; }
+.auth-sub { margin: 6px 0 0; color: var(--muted); }
+.auth-form { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+.auth-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.auth-submit { justify-content: center; padding: 10px 14px; font-size: 14px; margin-top: 4px; }
+.auth-alt { margin: 18px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+.auth-alt a:not(.btn) { color: var(--sea); font-weight: 600; text-decoration: none; }
+.auth-alt a:not(.btn):hover { text-decoration: underline; }
+.auth-alt .btn { text-decoration: none; }
+.auth-error { margin: 0; padding: 9px 12px; border-radius: 8px; background: var(--bad-soft); color: var(--bad); font-size: 13px; }
+.auth-note { margin: 16px 0 0; padding: 9px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: 13px; }
+.auth-success { margin-top: 20px; padding: 14px 16px; border-radius: 10px; background: var(--good-soft); color: var(--ink); }
+.auth-success b { color: var(--good); }
+.auth-success p { margin: 6px 0 0; }
+.auth-foot { margin: 0; font-size: 12px; color: var(--faint); }
+@media (max-width: 480px) {
+  .auth-card { padding: 22px 18px 20px; }
+  .auth-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Menu utilisateur ---------- */
+.who-btn { background: none; border: 0; padding: 2px 4px; border-radius: 999px; cursor: pointer; }
+.who-btn:hover .av { box-shadow: 0 0 0 2px var(--blue); }
+.user-menu a, .user-menu button { display: block; text-align: left; padding: 8px 10px; border-radius: 6px; color: inherit; text-decoration: none; background: none; border: 0; cursor: pointer; font-size: 13px; }
+.user-menu a:hover, .user-menu button:hover { background: var(--surface-2); }
+.user-menu-head { padding: 8px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; font-size: 13px; }
+.user-menu-head span { font-size: 12px; }
+.menu-wrap + .menu-wrap { margin-left: 4px; }
+
+/* ---------- Tableaux d'administration ---------- */
+.who-cell { display: flex; align-items: center; gap: 10px; }
+.tbl select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.row-actions { justify-content: flex-end; flex-wrap: nowrap; }

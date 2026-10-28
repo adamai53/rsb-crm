@@ -1,0 +1,8 @@
+/* Styles globaux : charte et composants repris tels quels du prototype rsb-crm.html */
+@use 'styles/prototype';
+@use 'styles/app';
+
+app-root { display: block; height: 100%; }
+
+/* Le prototype utilisait des <button> pour la navigation ; ici ce sont des liens de routeur. */
+a.nav-btn { text-decoration: none; }
