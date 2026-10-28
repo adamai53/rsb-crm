@@ -69,3 +69,36 @@
 .who-cell { display: flex; align-items: center; gap: 10px; }
 .tbl select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
 .row-actions { justify-content: flex-end; flex-wrap: nowrap; }
+
+/* ---------- Référentiel (étape 3) ---------- */
+.search-host { flex: 1; max-width: 520px; min-width: 0; display: block; }
+.search-host .search { max-width: none; }
+.gres button.active { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--accent); }
+.gres .empty { padding: 12px; }
+.cell-sub { font-size: 12px; }
+tbody tr.row:focus-visible td { background: var(--sea-soft); }
+.pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; }
+.form-error { margin: 4px 22px 0; }
+.dr-sub { margin-top: 2px; }
+.dr-sub:empty { display: none; }
+.prop-copy { font-size: 12.5px; user-select: all; }
+.prop-copy a { color: var(--sea); }
+.prop select:disabled { opacity: .75; cursor: not-allowed; }
+.av.inactive { opacity: .5; }
+.li b.done { text-decoration: line-through; color: var(--muted); }
+.ev-link { font-weight: 500; }
+.import-body { padding: 4px 22px 8px; display: flex; flex-direction: column; gap: 14px; }
+.import-body p { margin: 0; font-size: 13px; }
+.import-report { padding: 4px 22px 8px; }
+.import-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.import-kpis .kpi { padding: 10px 12px; }
+.import-kpis .val { font-size: 24px; }
+.import-report h4 { margin: 16px 0 6px; font-size: 14px; }
+.import-issues { margin: 0; padding: 0; list-style: none; max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.import-issues li { padding: 7px 10px; border-bottom: 1px solid var(--line); font-size: 12.5px; display: flex; gap: 10px; }
+.import-issues li:last-child { border-bottom: 0; }
+.import-issues .mono { color: var(--muted); flex: none; }
+@media (max-width: 820px) {
+  .search-host { max-width: none; }
+  .import-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

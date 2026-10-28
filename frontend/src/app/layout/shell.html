@@ -16,20 +16,16 @@
 
 <div class="col">
   <header class="top">
-    <div class="search">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-      <input type="search" placeholder="Rechercher un contact, un navire, une entreprise…" autocomplete="off"
-             aria-label="Recherche globale" disabled>
-    </div>
+    <rsb-global-search />
     <div class="top-spacer"></div>
     <div class="menu-wrap">
       <button class="btn primary" type="button" aria-haspopup="true" [attr.aria-expanded]="menu() === 'create'"
               (click)="toggle('create')">+ Créer</button>
       <div class="menu" [hidden]="menu() !== 'create'">
-        <button type="button" disabled>Contact</button>
-        <button type="button" disabled>Entreprise</button>
-        <button type="button" disabled>Transaction (demande de soutage)</button>
-        <button type="button" disabled>Tâche</button>
+        <button type="button" (click)="create('contact')">Contact</button>
+        <button type="button" (click)="create('company')">Entreprise</button>
+        <button type="button" disabled title="Disponible avec le module Ventes">Transaction (demande de soutage)</button>
+        <button type="button" disabled title="Disponible avec le module Ventes">Tâche</button>
       </div>
     </div>
     @if (user(); as u) {
@@ -56,3 +52,17 @@
     <router-outlet />
   </main>
 </div>
+
+@if (record(); as r) {
+  @switch (r.type) {
+    @case ('contact') { <rsb-contact-drawer [id]="r.id" /> }
+    @case ('company') { <rsb-company-drawer [id]="r.id" /> }
+  }
+}
+
+@if (ui.form(); as f) {
+  @switch (f.kind) {
+    @case ('contact') { <rsb-contact-form [id]="$any(f).id" [companyId]="$any(f).companyId" /> }
+    @case ('company') { <rsb-company-form [id]="f.id" /> }
+  }
+}

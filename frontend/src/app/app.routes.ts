@@ -1,13 +1,19 @@
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 
 import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
 import { NAV } from './core/nav';
+
+/** Modules déjà livrés ; les autres affichent une page provisoire. */
+const READY: Record<string, Route['loadComponent']> = {
+  contacts: () => import('./features/contacts/contacts.page').then((m) => m.ContactsPage),
+  companies: () => import('./features/companies/companies.page').then((m) => m.CompaniesPage),
+};
 
 const moduleRoutes: Routes = NAV.flatMap((group) => group.items).map((item) => ({
   path: item.path,
   title: `${item.label} · RSB CRM`,
   data: { title: item.label, description: item.description },
-  loadComponent: () => import('./shared/coming-soon.page').then((m) => m.ComingSoonPage),
+  loadComponent: READY[item.path] ?? (() => import('./shared/coming-soon.page').then((m) => m.ComingSoonPage)),
 }));
 
 export const routes: Routes = [

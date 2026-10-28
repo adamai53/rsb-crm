@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByRoleAndStatus(Role role, UserStatus status);
 
     List<User> findAllByOrderByStatusAscLastNameAscFirstNameAsc();
+
+    boolean existsByIdAndStatus(UUID id, UserStatus status);
 }

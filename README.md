@@ -9,7 +9,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 |---|---|---|
 | 1. Socle | Arborescence, Docker Compose dev, Flyway V1, healthchecks, CI de build | ✅ |
 | 2. Authentification | Inscription, vérification e-mail, validation admin, JWT, rôles | ✅ |
-| 3. Référentiel | Entreprises, contacts, score, import CSV, recherche | à faire |
+| 3. Référentiel | Entreprises, contacts, score, import CSV, recherche | ✅ |
 | 4. Ventes | Pipeline, leads, tâches, activités, escales | à faire |
 | 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | à faire |
 | 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | à faire |
@@ -105,6 +105,25 @@ Les migrations Flyway (`backend/src/main/resources/db/migration`) sont appliqué
 | `POST /api/auth/register · login · refresh · logout · verify-email · forgot-password · reset-password` | public |
 | `GET /api/auth/me`, `POST /api/auth/password`, `PATCH /api/users/me` | connecté |
 | `GET /api/users`, `POST /api/users/{id}/approve · disable · resend-verification`, `PATCH /api/users/{id}/role` | ADMIN |
+
+## Référentiel
+
+- **Entreprises** : liste triée par CA livré (seules les livraisons avec BDN signé comptent), contacts,
+  transactions ouvertes, volume livré ; fiche avec activité, contacts et transactions.
+- **Contacts** : filtres par cycle de vie, texte et propriétaire ; tri par nom, entreprise, cycle de vie, score
+  ou dernière activité ; fiche avec activité (note, appel, e-mail, réunion), transactions, tâches et détail du score.
+- **Score sur 100** (`ContactScoring`, seule source de vérité pour la liste et la fiche) : source (Recommandation 20 …
+  autre 5), cycle de vie (×7), interactions (5 par activité, plafond 20), transactions ouvertes (> 400 k → 18,
+  > 100 k → 12, > 0 → 6), décideur achats carburant (12).
+- **Droits** : tout le monde lit tout ; un SALES ne modifie que ses dossiers ; seuls MANAGER et ADMIN réattribuent.
+  Les activités peuvent être ajoutées par tous (elles sont signées par leur auteur).
+- **Import CSV** (`POST /api/contacts/import`, 5 Mo max) : séparateur `,` ou `;`, guillemets, BOM, fichiers Excel
+  en Windows-1252 ; colonnes `prenom, nom, email, telephone, poste, entreprise, source` (accents et majuscules
+  tolérés). Les entreprises inconnues sont créées ; les doublons d'e-mail et e-mails invalides sont ignorés et listés.
+- **Export CSV** (`GET /api/contacts/export`) : format Excel français (`;`, UTF-8 avec BOM), réimportable,
+  formules neutralisées.
+- **Recherche globale** (`GET /api/search?q=`, Ctrl+K) : contacts, entreprises, navires et IMO dès 2 caractères.
+- La fiche d'un enregistrement est dans l'URL (`?fiche=contact:<id>`) : on peut la partager ou revenir en arrière.
 
 ## Variables d'environnement
 
