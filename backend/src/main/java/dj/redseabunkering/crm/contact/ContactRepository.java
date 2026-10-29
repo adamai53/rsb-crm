@@ -1,5 +1,6 @@
 package dj.redseabunkering.crm.contact;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,4 +10,7 @@ public interface ContactRepository extends JpaRepository<Contact, UUID> {
 
     @Query("select count(c) > 0 from Contact c where lower(c.email) = lower(:email)")
     boolean existsByEmailIgnoreCase(String email);
+
+    @Query("select c from Contact c where lower(c.email) = lower(:email) order by c.createdAt")
+    List<Contact> findByEmailIgnoreCase(String email);
 }

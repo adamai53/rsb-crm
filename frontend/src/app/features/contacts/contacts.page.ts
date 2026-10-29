@@ -44,9 +44,9 @@ const PAGE_SIZE = 50;
       </div>
       <input type="search" placeholder="Filtrer par nom, e-mail, entreprise" aria-label="Filtrer les contacts"
              [value]="qInput()" (input)="onSearch($any($event.target).value)">
-      <select aria-label="Propriétaire" [value]="ownerId() ?? 'all'" (change)="setOwner($any($event.target).value)">
+      <select aria-label="Propriétaire" (change)="setOwner($any($event.target).value)">
         <option value="all">Tous les commerciaux</option>
-        @for (u of users(); track u.id) { <option [value]="u.id">{{ u.name }}</option> }
+        @for (u of users(); track u.id) { <option [value]="u.id" [selected]="u.id === ownerId()">{{ u.name }}</option> }
       </select>
     </div>
 

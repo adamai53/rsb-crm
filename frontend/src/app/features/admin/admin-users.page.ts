@@ -61,10 +61,10 @@ const STATUS_CLASS: Record<UserStatus, string> = {
                 </div>
               </td>
               <td>
-                <select [value]="u.role" [disabled]="u.id === me()?.id || busy() === u.id"
+                <select [disabled]="u.id === me()?.id || busy() === u.id"
                         [attr.aria-label]="'Rôle de ' + u.firstName + ' ' + u.lastName"
                         (change)="changeRole(u, $any($event.target).value)">
-                  @for (r of roles; track r) { <option [value]="r">{{ roleLabels[r] }}</option> }
+                  @for (r of roles; track r) { <option [value]="r" [selected]="r === u.role">{{ roleLabels[r] }}</option> }
                 </select>
               </td>
               <td><span [class]="'pill ' + statusClass[u.status]">{{ statusLabels[u.status] }}</span></td>

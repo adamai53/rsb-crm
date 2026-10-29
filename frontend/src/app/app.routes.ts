@@ -7,6 +7,10 @@ import { NAV } from './core/nav';
 const READY: Record<string, Route['loadComponent']> = {
   contacts: () => import('./features/contacts/contacts.page').then((m) => m.ContactsPage),
   companies: () => import('./features/companies/companies.page').then((m) => m.CompaniesPage),
+  inbox: () => import('./features/inbox/inbox.page').then((m) => m.InboxPage),
+  deals: () => import('./features/deals/deals.page').then((m) => m.DealsPage),
+  tasks: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),
+  calls: () => import('./features/calls/calls.page').then((m) => m.CallsPage),
 };
 
 const moduleRoutes: Routes = NAV.flatMap((group) => group.items).map((item) => ({

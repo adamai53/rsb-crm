@@ -10,7 +10,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 | 1. Socle | Arborescence, Docker Compose dev, Flyway V1, healthchecks, CI de build | ✅ |
 | 2. Authentification | Inscription, vérification e-mail, validation admin, JWT, rôles | ✅ |
 | 3. Référentiel | Entreprises, contacts, score, import CSV, recherche | ✅ |
-| 4. Ventes | Pipeline, leads, tâches, activités, escales | à faire |
+| 4. Ventes | Pipeline, leads, tâches, activités, escales | ✅ |
 | 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | à faire |
 | 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | à faire |
 | 7. Données démo et polissage UI | | à faire |
@@ -124,6 +124,28 @@ Les migrations Flyway (`backend/src/main/resources/db/migration`) sont appliqué
   formules neutralisées.
 - **Recherche globale** (`GET /api/search?q=`, Ctrl+K) : contacts, entreprises, navires et IMO dès 2 caractères.
 - La fiche d'un enregistrement est dans l'URL (`?fiche=contact:<id>`) : on peut la partager ou revenir en arrière.
+
+## Ventes
+
+- **Pipeline** (`/deals`) : kanban par étape avec glisser-déposer (Angular CDK) ou vue liste ; bandeau
+  « ouvertes · montant · pondéré · transformation » calculé sur le même filtre.
+- **Règles métier** (testées dans `SalesRulesTests` et `PipelineMetricsTests`) :
+  1. pipeline pondéré = Σ montant ouvert × probabilité de l'étape ;
+  2. taux de transformation = livrées / (livrées + perdues) ;
+  3. conversion d'un lead en une transaction SQL : entreprise retrouvée par nom (casse ignorée) ou créée, contact SQL
+     (réutilisé si l'e-mail existe déjà), transaction « Qualifiée » au prix de référence, tâche « Envoyer la cotation »
+     du jour en priorité haute, attribution au commercial actif le moins chargé, activité système avec le message ;
+  4. livrée : date de clôture, contact Client, montant compté dans le CA ;
+  5. perdue : motif obligatoire (fenêtre de choix à l'écran, refus 400 côté API sinon) ;
+  6. étape ouverte : clôture et motif effacés, contact au moins Opportunité (comme le prototype, à chaque passage
+     sur une étape ouverte, sans jamais faire redescendre un Client) ;
+  7. chaque changement d'étape : activité système « Étape : X → Y » et ligne dans `audit_log`.
+- **Leads entrants** (`/inbox`) : demandes à traiter, conversion ou rejet ; saisie manuelle d'une demande reçue par
+  téléphone ou e-mail (le formulaire public du site arrive à l'étape 6).
+- **Tâches** (`/tasks`) : en retard, aujourd'hui, à venir, terminées ; une tâche liée à une transaction hérite de
+  son contact et de son entreprise. Pastilles de la barre latérale : leads à traiter, tâches dues.
+- **Escales** (`/calls`) : frise de charge sur 21 jours et liste des navires attendus (hors transactions perdues),
+  calculées sur la date de Djibouti.
 
 ## Variables d'environnement
 

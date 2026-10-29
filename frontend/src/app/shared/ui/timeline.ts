@@ -45,7 +45,7 @@ const PLACEHOLDERS: Partial<Record<ActivityType, string>> = {
             <div>
               <div class="meta">
                 {{ labels[a.type] }} · {{ author(a) }} · {{ rel(a.occurredAt) }}
-                @if (a.dealVessel && a.dealId) {
+                @if (a.dealVessel && a.dealId && !dealId()) {
                   · <button class="lnk ev-link" type="button" (click)="ui.openRecord('deal', a.dealId)">{{ a.dealVessel }}</button>
                 } @else if (a.contactName && a.contactId && !contactId()) {
                   · <button class="lnk ev-link" type="button" (click)="ui.openRecord('contact', a.contactId)">{{ a.contactName }}</button>
@@ -65,6 +65,7 @@ export class Timeline {
   /** Fiche concernée : les activités sont consignées sur le contact et son entreprise. */
   readonly contactId = input<string | null>(null);
   readonly companyId = input<string | null>(null);
+  readonly dealId = input<string | null>(null);
 
   private readonly api = inject(CrmApi);
   private readonly ref = inject(ReferenceService);
@@ -87,8 +88,9 @@ export class Timeline {
     effect(() => {
       const contactId = this.contactId();
       const companyId = this.companyId();
+      const dealId = this.dealId();
       this.ui.version();
-      untracked(() => this.load(contactId, companyId));
+      untracked(() => this.load(contactId, companyId, dealId));
     });
   }
 
@@ -100,7 +102,8 @@ export class Timeline {
     const text = this.text.trim();
     if (!text || this.saving()) return;
     this.saving.set(true);
-    this.api.logActivity({ type: this.type(), text, contactId: this.contactId(), companyId: this.companyId() }).subscribe({
+    this.api
+      .logActivity({ type: this.type(), text, contactId: this.contactId(), companyId: this.companyId(), dealId: this.dealId() }).subscribe({
       next: () => {
         this.text = '';
         this.saving.set(false);
@@ -114,8 +117,9 @@ export class Timeline {
     });
   }
 
-  private load(contactId: string | null, companyId: string | null): void {
-    const query = contactId ? { contactId } : companyId ? { companyId } : null;
+  /** Fil de la fiche la plus précise : transaction, sinon contact, sinon entreprise. */
+  private load(contactId: string | null, companyId: string | null, dealId: string | null): void {
+    const query = dealId ? { dealId } : contactId ? { contactId } : companyId ? { companyId } : null;
     if (!query) return;
     this.api.activities(query).subscribe({
       next: (list) => {

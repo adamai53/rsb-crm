@@ -4,12 +4,13 @@ import { errorMessage } from '../../core/api-error';
 import { AuthService } from '../../core/auth/auth.service';
 import { CrmApi } from '../../core/api/crm-api';
 import { ContactDetail, Lifecycle } from '../../core/api/models';
-import { daysFrom, fmtDate, fmtMT, fmtUSD } from '../../core/format';
+import { fmtDate, fmtMT, fmtUSD } from '../../core/format';
 import { LIFECYCLES, LIFECYCLE_LABELS, ReferenceService } from '../../core/reference.service';
 import { ToastService } from '../../core/toast.service';
 import { UiService } from '../../core/ui.service';
 import { ScoreBar, StagePill } from '../../shared/ui/badges';
 import { Drawer } from '../../shared/ui/drawer';
+import { TaskItemRow } from '../../shared/ui/task-item';
 import { Timeline } from '../../shared/ui/timeline';
 
 type Tab = 'activity' | 'deals' | 'tasks' | 'score';
@@ -17,7 +18,7 @@ type Tab = 'activity' | 'deals' | 'tasks' | 'score';
 /** Fiche contact : coordonnées, cycle de vie, propriétaire, activité, transactions, tâches, détail du score. */
 @Component({
   selector: 'rsb-contact-drawer',
-  imports: [Drawer, Timeline, ScoreBar, StagePill],
+  imports: [Drawer, Timeline, ScoreBar, StagePill, TaskItemRow],
   template: `
     @if (detail(); as d) {
       <rsb-drawer kind="Contact" [heading]="d.contact.firstName + ' ' + d.contact.lastName" (closed)="ui.closeRecord()">
@@ -34,6 +35,8 @@ type Tab = 'activity' | 'deals' | 'tasks' | 'score';
           @if (d.contact.email) {
             <a class="btn sm" [href]="'mailto:' + d.contact.email">Écrire un e-mail</a>
           }
+          <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'deal', contactId: d.contact.id })">Nouvelle transaction</button>
+          <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'task', contactId: d.contact.id })">Nouvelle tâche</button>
           @if (d.editable) {
             <button class="btn sm danger" type="button" (click)="remove()">Supprimer</button>
           }
@@ -44,16 +47,16 @@ type Tab = 'activity' | 'deals' | 'tasks' | 'score';
           <div class="prop"><small>Téléphone</small><div class="mono prop-copy">{{ d.contact.phone || '—' }}</div></div>
           <div class="prop">
             <small><label for="dr-lc">Cycle de vie</label></small>
-            <select id="dr-lc" [value]="d.contact.lifecycle" [disabled]="!d.editable"
+            <select id="dr-lc" [disabled]="!d.editable"
                     (change)="setLifecycle($any($event.target).value)">
-              @for (l of lifecycles; track l) { <option [value]="l">{{ lifecycleLabels[l] }}</option> }
+              @for (l of lifecycles; track l) { <option [value]="l" [selected]="l === d.contact.lifecycle">{{ lifecycleLabels[l] }}</option> }
             </select>
           </div>
           <div class="prop">
             <small><label for="dr-owner">Propriétaire</label></small>
-            <select id="dr-owner" [value]="d.contact.ownerId" [disabled]="!canReassign()"
+            <select id="dr-owner" [disabled]="!canReassign()"
                     (change)="setOwner($any($event.target).value)">
-              @for (u of owners(); track u.id) { <option [value]="u.id">{{ u.name }}</option> }
+              @for (u of owners(); track u.id) { <option [value]="u.id" [selected]="u.id === d.contact.ownerId">{{ u.name }}</option> }
             </select>
           </div>
           <div class="prop"><small>Source</small><div>{{ d.contact.source || '—' }}</div></div>
@@ -82,12 +85,9 @@ type Tab = 'activity' | 'deals' | 'tasks' | 'score';
             } @empty { <p class="empty">Aucune transaction.</p> }
           }
           @case ('tasks') {
-            @for (t of d.tasks; track t.id) {
-              <div class="li">
-                <div class="grow"><b [class.done]="t.done">{{ t.title }}</b><span>Échéance {{ fmtDate(t.dueDate) }} · priorité {{ t.priority.toLowerCase() }}</span></div>
-                @if (!t.done && daysFrom(t.dueDate) < 0) { <span class="pill p-bad">En retard</span> }
-              </div>
-            } @empty { <p class="empty">Aucune tâche.</p> }
+            <div class="list">
+              @for (t of d.tasks; track t.id) { <rsb-task-item [task]="t" /> } @empty { <p class="empty">Aucune tâche.</p> }
+            </div>
           }
           @case ('score') {
             <div class="panel">
@@ -125,7 +125,6 @@ export class ContactDrawer {
   protected readonly fmtDate = fmtDate;
   protected readonly fmtMT = fmtMT;
   protected readonly fmtUSD = fmtUSD;
-  protected readonly daysFrom = daysFrom;
   /** Plus forte contribution possible d'un critère (cycle de vie « Client » : 28). */
   protected readonly maxPart = 28;
 

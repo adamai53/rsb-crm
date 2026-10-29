@@ -24,6 +24,7 @@ type Tab = 'activity' | 'contacts' | 'deals';
         <span sub>{{ typeLabel() }} · {{ place() }}</span>
         <ng-container actions>
           <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'contact', companyId: d.company.id })">Ajouter un contact</button>
+          <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'deal', companyId: d.company.id })">Nouvelle transaction</button>
           @if (d.editable) {
             <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'company', id: d.company.id })">Modifier</button>
             <button class="btn sm danger" type="button" (click)="remove()">Supprimer</button>
@@ -41,8 +42,8 @@ type Tab = 'activity' | 'contacts' | 'deals';
           <div class="prop"><small>Volume livré</small><div class="num">{{ fmtMT(d.company.deliveredVolumeMt) }}</div></div>
           <div class="prop">
             <small><label for="dr-co-owner">Propriétaire</label></small>
-            <select id="dr-co-owner" [value]="d.company.ownerId" [disabled]="!canReassign()" (change)="setOwner($any($event.target).value)">
-              @for (u of owners(); track u.id) { <option [value]="u.id">{{ u.name }}</option> }
+            <select id="dr-co-owner" [disabled]="!canReassign()" (change)="setOwner($any($event.target).value)">
+              @for (u of owners(); track u.id) { <option [value]="u.id" [selected]="u.id === d.company.ownerId">{{ u.name }}</option> }
             </select>
           </div>
           <div class="prop"><small>Dans le CRM depuis</small><div>{{ fmtDateY(d.company.createdAt) }}</div></div>

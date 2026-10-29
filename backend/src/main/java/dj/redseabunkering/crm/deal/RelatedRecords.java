@@ -43,6 +43,12 @@ public class RelatedRecords {
                 rs.getObject(6, UUID.class)), contactId);
     }
 
+    public List<TaskSummary> tasksOfDeal(UUID dealId) {
+        return jdbc.query(TASKS.formatted("deal_id"), (rs, i) -> new TaskSummary(rs.getObject(1, UUID.class),
+                rs.getString(2), rs.getObject(3, LocalDate.class), rs.getString(4), rs.getBoolean(5),
+                rs.getObject(6, UUID.class)), dealId);
+    }
+
     private List<DealSummary> deals(String column, UUID id) {
         return jdbc.query(DEALS.formatted(column), (rs, i) -> new DealSummary(rs.getObject(1, UUID.class),
                 rs.getString(2), rs.getString(3), rs.getBigDecimal(4), rs.getBigDecimal(5),

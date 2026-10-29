@@ -102,3 +102,19 @@ tbody tr.row:focus-visible td { background: var(--sea-soft); }
   .search-host { max-width: none; }
   .import-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Ventes (étape 4) ---------- */
+.dcard.cdk-drag-preview { box-shadow: var(--shadow); cursor: grabbing; }
+.dcard-placeholder { opacity: .35; border-style: dashed; min-height: 84px; background: transparent; }
+.cdk-drag-animating, .lane.cdk-drop-list-dragging .dcard:not(.cdk-drag-placeholder) { transition: transform 200ms cubic-bezier(0, 0, .2, 1); }
+.lane.cdk-drop-list-receiving, .lane.cdk-drop-list-dragging { background: var(--sea-soft); }
+.lost-reason { color: var(--bad); }
+.lead-message { margin: 6px 0 0; white-space: pre-wrap; }
+.small-note { font-size: 12.5px; margin: 0; }
+.count { font-size: 13px; }
+.task-list { margin-top: 8px; }
+.li input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.calls-strip { margin-bottom: 16px; }
+.datebox.hidden-box { visibility: hidden; }
+.imo { display: inline !important; font-weight: 400; margin-left: 4px; }
+.call-qty { text-align: right; }

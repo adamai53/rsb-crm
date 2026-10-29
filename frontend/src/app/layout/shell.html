@@ -9,6 +9,8 @@
       <a class="nav-btn" [routerLink]="item.path" routerLinkActive #rla="routerLinkActive"
          [attr.aria-current]="rla.isActive ? 'page' : null">
         <span>{{ item.label }}</span>
+        @if (item.path === 'inbox' && badges()['inbox']) { <span class="nav-badge">{{ badges()['inbox'] }}</span> }
+        @if (item.path === 'tasks' && badges()['tasks']) { <span class="nav-badge alt">{{ badges()['tasks'] }}</span> }
       </a>
     }
   }
@@ -24,8 +26,8 @@
       <div class="menu" [hidden]="menu() !== 'create'">
         <button type="button" (click)="create('contact')">Contact</button>
         <button type="button" (click)="create('company')">Entreprise</button>
-        <button type="button" disabled title="Disponible avec le module Ventes">Transaction (demande de soutage)</button>
-        <button type="button" disabled title="Disponible avec le module Ventes">Tâche</button>
+        <button type="button" (click)="create('deal')">Transaction (demande de soutage)</button>
+        <button type="button" (click)="create('task')">Tâche</button>
       </div>
     </div>
     @if (user(); as u) {
@@ -57,12 +59,18 @@
   @switch (r.type) {
     @case ('contact') { <rsb-contact-drawer [id]="r.id" /> }
     @case ('company') { <rsb-company-drawer [id]="r.id" /> }
+    @case ('deal') { <rsb-deal-drawer [id]="r.id" /> }
+    @case ('lead') { <rsb-lead-drawer [id]="r.id" /> }
   }
 }
 
 @if (ui.form(); as f) {
   @switch (f.kind) {
     @case ('contact') { <rsb-contact-form [id]="$any(f).id" [companyId]="$any(f).companyId" /> }
-    @case ('company') { <rsb-company-form [id]="f.id" /> }
+    @case ('company') { <rsb-company-form [id]="$any(f).id" /> }
+    @case ('deal') { <rsb-deal-form [id]="$any(f).id" [companyId]="$any(f).companyId" [contactId]="$any(f).contactId" /> }
+    @case ('task') { <rsb-task-form [dealId]="$any(f).dealId" [contactId]="$any(f).contactId" /> }
+    @case ('lead') { <rsb-lead-form /> }
+    @case ('lost') { <rsb-lost-reason-modal [dealId]="$any(f).dealId" [vesselName]="$any(f).vesselName" /> }
   }
 }

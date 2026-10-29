@@ -1,4 +1,4 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
@@ -12,6 +12,13 @@ import { CompanyDrawer } from '../features/companies/company-drawer';
 import { CompanyForm } from '../features/companies/company-form';
 import { ContactDrawer } from '../features/contacts/contact-drawer';
 import { ContactForm } from '../features/contacts/contact-form';
+import { DealDrawer } from '../features/deals/deal-drawer';
+import { DealForm } from '../features/deals/deal-form';
+import { LostReasonModal } from '../features/deals/lost-reason-modal';
+import { LeadDrawer } from '../features/inbox/lead-drawer';
+import { LeadForm } from '../features/inbox/lead-form';
+import { TaskForm } from '../features/tasks/task-form';
+import { SalesApi } from '../core/api/sales';
 import { GlobalSearch } from './global-search';
 
 /**
@@ -20,7 +27,10 @@ import { GlobalSearch } from './global-search';
  */
 @Component({
   selector: 'rsb-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, GlobalSearch, ContactDrawer, CompanyDrawer, ContactForm, CompanyForm],
+  imports: [
+    RouterOutlet, RouterLink, RouterLinkActive, GlobalSearch, ContactDrawer, CompanyDrawer, DealDrawer, LeadDrawer,
+    ContactForm, CompanyForm, DealForm, TaskForm, LeadForm, LostReasonModal,
+  ],
   templateUrl: './shell.html',
   host: { class: 'app' },
 })
@@ -46,15 +56,26 @@ export class Shell {
     { initialValue: null },
   );
 
+  /** Pastilles de la barre latérale : leads à traiter et tâches dues de l'utilisateur. */
+  protected readonly badges = signal<Record<string, number>>({});
+
   constructor() {
     inject(ReferenceService).load();
+    const sales = inject(SalesApi);
+    effect(() => {
+      this.ui.version();
+      untracked(() => {
+        sales.leads('NOUVEAU').subscribe((l) => this.badges.update((b) => ({ ...b, inbox: l.length })));
+        sales.dueTasksCount().subscribe((r) => this.badges.update((b) => ({ ...b, tasks: r.due })));
+      });
+    });
   }
 
   protected toggle(which: 'create' | 'user'): void {
     this.menu.update((m) => (m === which ? null : which));
   }
 
-  protected create(kind: 'contact' | 'company'): void {
+  protected create(kind: 'contact' | 'company' | 'deal' | 'task'): void {
     this.menu.set(null);
     this.ui.openForm({ kind });
   }

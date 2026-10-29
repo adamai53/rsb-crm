@@ -18,6 +18,10 @@ export class ReferenceService {
   readonly sources = computed(() => this.data().sources);
   readonly users = computed(() => this.data().users);
   readonly activeUsers = computed(() => this.data().users.filter((u) => u.active));
+  readonly stages = computed(() => this.data().stages);
+  readonly openStages = computed(() => this.data().stages.filter((s) => !s.won && !s.lost));
+  readonly fuelGrades = computed(() => this.data().fuelGrades);
+  readonly deliveryLocations = computed(() => this.data().deliveryLocations);
 
   load(force = false): void {
     if (this.loaded && !force) return;
@@ -30,6 +34,14 @@ export class ReferenceService {
 
   user(id: string | null | undefined): UserRef | undefined {
     return id ? this.data().users.find((u) => u.id === id) : undefined;
+  }
+
+  fuelGrade(code: string | null | undefined) {
+    return this.data().fuelGrades.find((g) => g.code === code);
+  }
+
+  stage(code: string) {
+    return this.data().stages.find((s) => s.code === code);
   }
 
   companyTypeLabel(code: CompanyType): string {
