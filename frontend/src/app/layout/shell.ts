@@ -25,6 +25,7 @@ import { QuoteNewModal } from '../features/quotes/quote-new-modal';
 import { QuoteSendModal } from '../features/quotes/quote-send-modal';
 import { TaskForm } from '../features/tasks/task-form';
 import { SalesApi } from '../core/api/sales';
+import { CampaignForm } from '../features/marketing/campaign-form';
 import { GlobalSearch } from './global-search';
 
 /**
@@ -36,7 +37,7 @@ import { GlobalSearch } from './global-search';
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, GlobalSearch, ContactDrawer, CompanyDrawer, DealDrawer, LeadDrawer,
     ContactForm, CompanyForm, DealForm, TaskForm, LeadForm, LostReasonModal, QuoteModal, QuoteNewModal, QuoteSendModal,
-    ComposeModal, EnrollModal, TemplateModal,
+    ComposeModal, EnrollModal, TemplateModal, CampaignForm,
   ],
   templateUrl: './shell.html',
   host: { class: 'app' },

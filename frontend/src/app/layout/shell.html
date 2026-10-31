@@ -78,5 +78,6 @@
     @case ('compose') { <rsb-compose-modal [contactId]="$any(f).contactId" [dealId]="$any(f).dealId" [templateId]="$any(f).templateId" /> }
     @case ('enroll') { <rsb-enroll-modal [contactId]="$any(f).contactId" /> }
     @case ('template') { <rsb-template-modal [id]="$any(f).id" /> }
+    @case ('campaign') { <rsb-campaign-form [campaign]="$any(f).campaign" /> }
   }
 }

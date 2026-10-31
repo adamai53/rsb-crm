@@ -12,7 +12,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,21 +32,13 @@ import dj.redseabunkering.crm.common.CurrentUser;
 @RequestMapping("/api/activities")
 public class ActivityController {
 
-    private static final String SELECT = """
-            select a.id, a.type, a.text, a.occurred_at, a.author_id, a.deal_id, d.vessel_name,
-                   a.contact_id, c.first_name || ' ' || c.last_name as contact_name, a.company_id
-            from activities a
-            left join deals d on d.id = a.deal_id
-            left join contacts c on c.id = a.contact_id
-            """;
-
     private final ActivityRepository activities;
-    private final NamedParameterJdbcTemplate jdbc;
+    private final ActivityQueries queries;
     private final Clock clock;
 
-    public ActivityController(ActivityRepository activities, NamedParameterJdbcTemplate jdbc, Clock clock) {
+    public ActivityController(ActivityRepository activities, ActivityQueries queries, Clock clock) {
         this.activities = activities;
-        this.jdbc = jdbc;
+        this.queries = queries;
         this.clock = clock;
     }
 
@@ -70,12 +61,7 @@ public class ActivityController {
         } else {
             throw ApiException.badRequest("Précisez un contact, une entreprise ou une transaction.");
         }
-        return jdbc.query(SELECT + " where " + column + " = :id order by a.occurred_at desc limit :limit",
-                Map.of("id", id, "limit", Math.max(1, Math.min(limit, 500))),
-                (rs, i) -> new ActivityDto(rs.getObject(1, UUID.class), ActivityType.valueOf(rs.getString(2)),
-                        rs.getString(3), rs.getTimestamp(4).toInstant(), rs.getObject(5, UUID.class),
-                        rs.getObject(6, UUID.class), rs.getString(7), rs.getObject(8, UUID.class),
-                        rs.getString(9), rs.getObject(10, UUID.class)));
+        return queries.forRecord(column, id, Math.max(1, Math.min(limit, 500)));
     }
 
     @PostMapping
@@ -91,10 +77,6 @@ public class ActivityController {
         var activity = new Activity(req.type(), req.text().trim(), Instant.now(clock), me.id(), req.dealId(),
                 req.contactId(), req.companyId());
         return Map.of("id", activities.save(activity).getId());
-    }
-
-    public record ActivityDto(UUID id, ActivityType type, String text, Instant occurredAt, UUID authorId,
-            UUID dealId, String dealVessel, UUID contactId, String contactName, UUID companyId) {
     }
 
     public record ActivityRequest(

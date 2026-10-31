@@ -12,7 +12,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 | 3. Référentiel | Entreprises, contacts, score, import CSV, recherche | ✅ |
 | 4. Ventes | Pipeline, leads, tâches, activités, escales | ✅ |
 | 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | ✅ |
-| 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | à faire |
+| 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | ✅ |
 | 7. Données démo et polissage UI | | à faire |
 | 8. Production | Compose prod, Nginx + HTTPS, scripts VPS, sauvegardes, déploiement | à faire |
 
@@ -173,6 +173,32 @@ Les migrations Flyway (`backend/src/main/resources/db/migration`) sont appliqué
 Limite connue : le modèle « Envoi de cotation » dit « ci-joint », mais l'envoi automatique de la séquence ne joint
 pas de devis. Avant d'activer l'envoi automatique, adaptez ce modèle ou envoyez la cotation depuis le devis.
 
+## Marketing et rapports
+
+- **Attribution** : leads, clients et CA d'une campagne sont calculés. Une demande revient à la campagne dont le canal
+  est sa source et dont la période contient sa date d'arrivée. Leads = demandes non rejetées + transactions saisies
+  directement. Deux campagnes d'un même canal ne peuvent pas se chevaucher, sinon leurs leads seraient comptés deux fois.
+- **Droits** : tout le monde lit les campagnes ; seuls MANAGER et ADMIN les modifient et voient le code du formulaire.
+- **Rapports** : complets pour MANAGER et ADMIN, limités à ses propres dossiers pour un SALES. Le tableau de bord reste
+  une vue d'équipe ; ses tâches sont celles du commercial connecté, ou de toute l'équipe pour un manager.
+
+### Formulaire du site
+
+`POST /api/public/leads` crée un lead entrant. Le code à coller dans WordPress (bloc « HTML personnalisé ») est généré
+dans **Campagnes & formulaires**. Il déduit la source du paramètre `utm_source` de la page d'arrivée.
+
+| Protection | Fonctionnement |
+|---|---|
+| Clé API (`APP_PUBLIC_LEAD_API_KEY`) | Sans clé configurée, le formulaire est fermé. La clé reste visible dans le code de la page : elle identifie le site, elle ne le protège pas à elle seule. |
+| Captcha Cloudflare Turnstile (`CAPTCHA_SECRET`, `CAPTCHA_SITE_KEY`) | **Sans secret, le captcha est désactivé** : à renseigner avant la mise en ligne. Si Turnstile est injoignable, la demande est refusée. |
+| Limitation de débit (`PUBLIC_FORM_MAX_PER_IP`, 5 par défaut) | Par adresse IP sur 10 minutes, en mémoire : remise à zéro au redémarrage, valable pour une seule instance du backend. |
+| CORS (`PUBLIC_FORM_ALLOWED_ORIGINS`) | Seul le site vitrine peut appeler cette route depuis un navigateur, et aucune autre route de l'API. |
+| Champ piège | Un robot qui remplit le champ caché reçoit une réponse normale, sans lead créé. |
+
+Le proxy devant le backend doit écraser `X-Forwarded-For` avec l'adresse réelle du client, sinon la limitation de débit
+se contourne en falsifiant cet en-tête. `frontend/nginx.conf` le fait ; le proxy HTTPS de production devra transmettre
+l'adresse réelle.
+
 ## Variables d'environnement
 
 Voir [`deploy/.env.example`](deploy/.env.example). Aucun secret n'est versionné.
@@ -181,4 +207,4 @@ Voir [`deploy/.env.example`](deploy/.env.example). Aucun secret n'est versionné
 
 - Nom de domaine définitif (exemple utilisé : `crm.redseabunkering.com`).
 - Fournisseur SMTP de production.
-- Captcha du formulaire public (Cloudflare Turnstile ou hCaptcha).
+- Compte Cloudflare Turnstile pour le captcha du formulaire public (clés `CAPTCHA_SITE_KEY` et `CAPTCHA_SECRET`).

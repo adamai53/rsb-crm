@@ -3,7 +3,6 @@ import { Route, Routes } from '@angular/router';
 import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
 import { NAV } from './core/nav';
 
-/** Modules déjà livrés ; les autres affichent une page provisoire. */
 const READY: Record<string, Route['loadComponent']> = {
   contacts: () => import('./features/contacts/contacts.page').then((m) => m.ContactsPage),
   companies: () => import('./features/companies/companies.page').then((m) => m.CompaniesPage),
@@ -13,13 +12,17 @@ const READY: Record<string, Route['loadComponent']> = {
   calls: () => import('./features/calls/calls.page').then((m) => m.CallsPage),
   quotes: () => import('./features/quotes/quotes.page').then((m) => m.QuotesPage),
   emails: () => import('./features/emails/emails.page').then((m) => m.EmailsPage),
+  dashboard: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
+  marketing: () => import('./features/marketing/marketing.page').then((m) => m.MarketingPage),
+  reports: () => import('./features/reports/reports.page').then((m) => m.ReportsPage),
+  compare: () => import('./features/compare/compare.page').then((m) => m.ComparePage),
 };
 
 const moduleRoutes: Routes = NAV.flatMap((group) => group.items).map((item) => ({
   path: item.path,
   title: `${item.label} · RSB CRM`,
   data: { title: item.label, description: item.description },
-  loadComponent: READY[item.path] ?? (() => import('./shared/coming-soon.page').then((m) => m.ComingSoonPage)),
+  loadComponent: READY[item.path],
 }));
 
 export const routes: Routes = [

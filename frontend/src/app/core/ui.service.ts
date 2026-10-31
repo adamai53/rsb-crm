@@ -1,6 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { CampaignRow } from './api/analytics';
+
 export type RecordType = 'contact' | 'company' | 'deal' | 'lead';
 
 export type FormRequest =
@@ -15,7 +17,8 @@ export type FormRequest =
   | { kind: 'quote-send'; id: string }
   | { kind: 'compose'; contactId?: string; dealId?: string; templateId?: string }
   | { kind: 'enroll'; contactId?: string }
-  | { kind: 'template'; id: string };
+  | { kind: 'template'; id: string }
+  | { kind: 'campaign'; campaign?: CampaignRow };
 
 /**
  * État d'interface partagé : fiche ouverte (dans l'URL, ?fiche=contact:<id>, pour pouvoir la partager

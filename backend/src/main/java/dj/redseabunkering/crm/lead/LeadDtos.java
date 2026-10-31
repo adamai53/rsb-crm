@@ -23,7 +23,7 @@ public final class LeadDtos {
             BigDecimal estimatedValueUsd) {
     }
 
-    /** Saisie manuelle d'une demande (appel, e-mail) ; le formulaire public du site arrive à l'étape 6. */
+    /** Saisie manuelle d'une demande (appel, e-mail), ou demande du site une fois contrôlée. */
     public record LeadRequest(
             @NotBlank(message = "Le nom du demandeur est obligatoire.") @Size(max = 160) String name,
             @Size(max = 160) String companyName,

@@ -128,3 +128,15 @@ tbody tr.row:focus-visible td { background: var(--sea-soft); }
 .seq-actions { margin-top: 12px; align-items: center; }
 .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .check input { accent-color: var(--accent); }
+
+// Tableau de bord, rapports et marketing
+.mt-16 { margin-top: 16px; }
+.mt-8 { margin-top: 8px; }
+.nowrap { white-space: nowrap; }
+.sub.cycle { margin: 14px 0 0; }
+.cmp-kpis { margin-bottom: 16px; }
+.kpi .val.good { color: var(--good); }
+.kpi .val.warn { color: var(--warn); }
+.kpi .val.bad { color: var(--bad); }
+.snippet { width: 100%; font-family: var(--f-mono); font-size: 12px; white-space: pre; overflow: auto; }
+.m-foot .m-left { margin-right: auto; }
