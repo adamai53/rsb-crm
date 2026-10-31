@@ -140,3 +140,18 @@ tbody tr.row:focus-visible td { background: var(--sea-soft); }
 .kpi .val.bad { color: var(--bad); }
 .snippet { width: 100%; font-family: var(--f-mono); font-size: 12px; white-space: pre; overflow: auto; }
 .m-foot .m-left { margin-right: auto; }
+
+// Sur un écran de portable, les colonnes secondaires restent lisibles dans la fiche plutôt que de forcer un défilement
+@media (max-width: 1500px) {
+  rsb-contacts .tbl :is(th, td):is(:nth-child(3), :nth-child(6)),
+  rsb-companies .tbl :is(th, td):is(:nth-child(3), :nth-child(5)),
+  rsb-marketing .tbl :is(th, td):is(:nth-child(5), :nth-child(6)),
+  rsb-quotes .tbl :is(th, td):nth-child(8) { display: none; }
+}
+
+// « .who span » masque le nom sur mobile : l'avatar doit rester, c'est l'accès au profil et à la déconnexion
+@media (max-width: 820px) {
+  .who.who-btn span.av { display: inline-grid; }
+  .top-spacer { display: none; }
+  .top .search-host { flex: 1 1 0; }
+}

@@ -70,6 +70,9 @@ app:
   cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8081}
   signup-requires-approval: ${APP_SIGNUP_REQUIRES_APPROVAL:true}
   seed-demo: ${APP_SEED_DEMO:false}
+  demo:
+    password: ${APP_DEMO_PASSWORD:}
+    reference-date: ${APP_DEMO_REFERENCE_DATE:2026-10-04}
   mail-from: ${MAIL_FROM:crm@redseabunkering.com}
   public-form:
     api-key: ${APP_PUBLIC_LEAD_API_KEY:}

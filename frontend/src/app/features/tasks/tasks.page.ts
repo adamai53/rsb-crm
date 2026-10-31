@@ -44,11 +44,12 @@ import { TaskItemRow } from '../../shared/ui/task-item';
 export class TasksPage {
   private readonly api = inject(SalesApi);
   private readonly ref = inject(ReferenceService);
-  protected readonly me = inject(AuthService).user;
+  private readonly auth = inject(AuthService);
+  protected readonly me = this.auth.user;
   protected readonly ui = inject(UiService);
 
   protected readonly users = this.ref.users;
-  protected readonly ownerId = signal<string | null>(this.me()?.id ?? null);
+  protected readonly ownerId = signal<string | null>(this.auth.hasRole('SALES') ? (this.me()?.id ?? null) : null);
   private readonly tasks = signal<TaskItem[]>([]);
 
   protected readonly groups = computed(() => {

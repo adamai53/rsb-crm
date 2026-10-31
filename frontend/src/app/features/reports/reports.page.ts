@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 
 import { AnalyticsApi, Reports } from '../../core/api/analytics';
 import { AuthService } from '../../core/auth/auth.service';
+import { DemoService } from '../../core/demo.service';
 import { fmtK, fmtMT } from '../../core/format';
 import { UiService } from '../../core/ui.service';
 import { BarRow, HBars, VBars } from '../../shared/ui/charts';
@@ -21,6 +22,7 @@ const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'aoû
           {{ scoped() ? 'sur vos dossiers.' : "de l'équipe." }}
         </p>
       </div>
+      @if (demo.active()) { <span class="demo-note">Données de démonstration</span> }
     </div>
 
     @if (data(); as r) {
@@ -89,6 +91,7 @@ export class ReportsPage {
   private readonly api = inject(AnalyticsApi);
   private readonly auth = inject(AuthService);
   private readonly ui = inject(UiService);
+  protected readonly demo = inject(DemoService);
   protected readonly fmtK = fmtK;
 
   protected readonly data = signal<Reports | null>(null);

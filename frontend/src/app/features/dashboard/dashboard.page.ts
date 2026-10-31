@@ -4,6 +4,7 @@ import { AnalyticsApi, Dashboard } from '../../core/api/analytics';
 import { Activity, ActivityType } from '../../core/api/models';
 import { SalesApi, TaskItem } from '../../core/api/sales';
 import { AuthService } from '../../core/auth/auth.service';
+import { DemoService } from '../../core/demo.service';
 import { daysFrom, fmtDateY, fmtK, fmtMT, rel } from '../../core/format';
 import { ReferenceService, STAGE_CLASS } from '../../core/reference.service';
 import { UiService } from '../../core/ui.service';
@@ -27,6 +28,7 @@ const ICONS: Record<ActivityType, string> = { NOTE: 'NOTE', EMAIL: 'MAIL', CALL:
           <h1>Tableau de bord commercial</h1>
           <p>Vue d'ensemble du pipeline de soutage au {{ fmtDateY(d.today) }}.</p>
         </div>
+        @if (demo.active()) { <span class="demo-note">Données de démonstration</span> }
       </div>
 
       <div class="grid g-kpi">
@@ -130,6 +132,7 @@ export class DashboardPage {
   private readonly auth = inject(AuthService);
   private readonly ref = inject(ReferenceService);
   protected readonly ui = inject(UiService);
+  protected readonly demo = inject(DemoService);
 
   protected readonly stageClass = STAGE_CLASS;
   protected readonly labels = LABELS;

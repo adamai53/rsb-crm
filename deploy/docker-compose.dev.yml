@@ -43,6 +43,8 @@ services:
       APP_PUBLIC_URL: http://localhost:8081
       CORS_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:8081
       APP_SEED_DEMO: "true"
+      APP_DEMO_PASSWORD: DemoRsb2026
+      APP_DEMO_REFERENCE_DATE: ${APP_DEMO_REFERENCE_DATE:-2026-10-04}
       APP_PUBLIC_LEAD_API_KEY: dev-lead-key
       PUBLIC_FORM_ALLOWED_ORIGINS: http://localhost:8090
       PUBLIC_FORM_MAX_PER_IP: "100"

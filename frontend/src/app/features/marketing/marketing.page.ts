@@ -5,6 +5,7 @@ import { errorMessage, fieldErrors } from '../../core/api-error';
 import { AnalyticsApi, CampaignRow, FormConfig, MarketingSummary } from '../../core/api/analytics';
 import { SalesApi } from '../../core/api/sales';
 import { AuthService } from '../../core/auth/auth.service';
+import { DemoService } from '../../core/demo.service';
 import { fmtDate, fmtK, fmtN, fmtUSD } from '../../core/format';
 import { ReferenceService } from '../../core/reference.service';
 import { ToastService } from '../../core/toast.service';
@@ -22,6 +23,7 @@ import { buildSnippet } from './snippet';
         <h1>Campagnes & formulaires</h1>
         <p>Attribution des demandes à chaque canal : site, Google Ads, LinkedIn, Meta, salons et newsletter.</p>
       </div>
+      @if (demo.active()) { <span class="demo-note">Données de démonstration</span> }
       @if (canManage()) {
         <div class="actions">
           <button class="btn primary" type="button" (click)="ui.openForm({ kind: 'campaign' })">Nouvelle campagne</button>
@@ -163,6 +165,7 @@ export class MarketingPage {
   private readonly toast = inject(ToastService);
   protected readonly ref = inject(ReferenceService);
   protected readonly ui = inject(UiService);
+  protected readonly demo = inject(DemoService);
 
   protected readonly fmtK = fmtK;
   protected readonly fmtN = fmtN;

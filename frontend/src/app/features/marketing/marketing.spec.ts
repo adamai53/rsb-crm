@@ -89,6 +89,7 @@ describe('Rapports', () => {
     const http = TestBed.inject(HttpTestingController);
     const f = TestBed.createComponent(ReportsPage);
     f.detectChanges();
+    http.expectOne('/api/public/info').flush({ demo: false });
     http.expectOne('/api/reports/monthly-revenue').flush([
       { month: '2026-09', revenueUsd: 100000 }, { month: '2026-10', revenueUsd: 50000 },
     ]);

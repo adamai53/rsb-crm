@@ -6,7 +6,10 @@ import { Observable } from 'rxjs';
 import { errorMessage } from '../../core/api-error';
 import { ROLE_LABELS, Role, STATUS_LABELS, User, UserStatus } from '../../core/auth/auth.models';
 import { AuthService } from '../../core/auth/auth.service';
+import { DemoService } from '../../core/demo.service';
+import { ReferenceService } from '../../core/reference.service';
 import { ToastService } from '../../core/toast.service';
+import { UiService } from '../../core/ui.service';
 
 type Filter = 'ALL' | UserStatus;
 
@@ -26,6 +29,11 @@ const STATUS_CLASS: Record<UserStatus, string> = {
       <div>
         <h1>Administration</h1>
         <p>Validez les nouveaux comptes, ajustez les rôles et désactivez les accès qui ne sont plus utilisés.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" [disabled]="!demo.active() || resetting()"
+                [title]="demo.active() ? 'Efface les données métier et recharge la démonstration' : 'Données de démonstration non activées sur ce serveur'"
+                (click)="resetDemo()">Réinitialiser les données démo</button>
       </div>
     </div>
 
@@ -98,6 +106,10 @@ const STATUS_CLASS: Record<UserStatus, string> = {
 export class AdminUsersPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly toast = inject(ToastService);
+  private readonly ui = inject(UiService);
+  private readonly ref = inject(ReferenceService);
+  protected readonly demo = inject(DemoService);
+  protected readonly resetting = signal(false);
   protected readonly me = inject(AuthService).user;
 
   protected readonly roles: Role[] = ['ADMIN', 'MANAGER', 'SALES'];
@@ -119,6 +131,23 @@ export class AdminUsersPage implements OnInit {
   protected readonly visible = computed(() =>
     this.filter() === 'ALL' ? this.users() : this.users().filter((u) => u.status === this.filter()),
   );
+
+  protected resetDemo(): void {
+    if (!confirm('Effacer toutes les données métier et recharger la démonstration ? Les comptes sont conservés.')) return;
+    this.resetting.set(true);
+    this.demo.reset().subscribe({
+      next: () => {
+        this.resetting.set(false);
+        this.toast.show('Données de démonstration réinitialisées.');
+        this.ref.load(true);
+        this.ui.changed();
+      },
+      error: (e) => {
+        this.resetting.set(false);
+        this.toast.show(errorMessage(e));
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.http.get<User[]>('/api/users').subscribe({

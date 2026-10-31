@@ -1,0 +1,3 @@
+# Profil de démonstration : équivaut à APP_SEED_DEMO=true
+app:
+  seed-demo: true

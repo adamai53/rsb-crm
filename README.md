@@ -13,7 +13,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 | 4. Ventes | Pipeline, leads, tâches, activités, escales | ✅ |
 | 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | ✅ |
 | 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | ✅ |
-| 7. Données démo et polissage UI | | à faire |
+| 7. Données démo et polissage UI | | ✅ |
 | 8. Production | Compose prod, Nginx + HTTPS, scripts VPS, sauvegardes, déploiement | à faire |
 
 ## Arborescence
@@ -198,6 +198,23 @@ dans **Campagnes & formulaires**. Il déduit la source du paramètre `utm_source
 Le proxy devant le backend doit écraser `X-Forwarded-For` avec l'adresse réelle du client, sinon la limitation de débit
 se contourne en falsifiant cet en-tête. `frontend/nginx.conf` le fait ; le proxy HTTPS de production devra transmettre
 l'adresse réelle.
+
+## Données de démonstration
+
+Activées par `APP_SEED_DEMO=true` (ou le profil Spring `demo`), jamais en production réelle : 12 entreprises, 20 contacts,
+22 transactions, 6 leads, 9 tâches, 14 activités, 3 devis et 6 campagnes, repris du prototype.
+
+- **Commerciaux** : `hassan.doualeh@rsb.local`, `fatouma.ali@rsb.local`, `ibrahim.omar@rsb.local`, mot de passe commun
+  `APP_DEMO_PASSWORD`. Sans cette variable, ces comptes existent mais ne peuvent pas se connecter.
+- **Jour J** : `APP_DEMO_REFERENCE_DATE`, par défaut `2026-10-04`. Après cette date, les tâches apparaissent en retard, les
+  escales passées et les devis envoyés expirent au passage du job horaire. Avec `today`, les échéances restent à venir ;
+  le changement s'applique au prochain chargement (base vide ou réinitialisation).
+- **Campagnes** : dépense et audience reprises du prototype, mais leads, clients et CA sont calculés. Ils sont donc plus
+  petits que les chiffres saisis à la main du prototype (129 leads pour 6 demandes réelles).
+- **Réinitialisation** : bouton de la page Administration, réservé à l'ADMIN et désactivé sans démo. Elle efface toutes
+  les données métier ; comptes, référentiels et modèles d'e-mails sont conservés.
+- **Garde-fous** : le chargement n'a lieu que sur une base métier vide, et la réinitialisation est refusée si la base n'a
+  pas été remplie par la démo, même avec `APP_SEED_DEMO=true`.
 
 ## Variables d'environnement
 
