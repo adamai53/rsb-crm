@@ -9,7 +9,13 @@ export type FormRequest =
   | { kind: 'deal'; id?: string; companyId?: string; contactId?: string }
   | { kind: 'task'; dealId?: string; contactId?: string }
   | { kind: 'lead' }
-  | { kind: 'lost'; dealId: string; vesselName: string };
+  | { kind: 'lost'; dealId: string; vesselName: string }
+  | { kind: 'quote-new'; dealId?: string }
+  | { kind: 'quote'; id: string }
+  | { kind: 'quote-send'; id: string }
+  | { kind: 'compose'; contactId?: string; dealId?: string; templateId?: string }
+  | { kind: 'enroll'; contactId?: string }
+  | { kind: 'template'; id: string };
 
 /**
  * État d'interface partagé : fiche ouverte (dans l'URL, ?fiche=contact:<id>, pour pouvoir la partager

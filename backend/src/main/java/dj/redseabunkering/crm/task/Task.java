@@ -44,6 +44,12 @@ public class Task extends BaseEntity {
     @Column(name = "company_id")
     private UUID companyId;
 
+    @Column(name = "enrollment_id")
+    private UUID enrollmentId;
+
+    @Column(name = "sequence_step_id")
+    private UUID sequenceStepId;
+
     protected Task() {
     }
 
@@ -62,6 +68,11 @@ public class Task extends BaseEntity {
         this.title = title.trim();
         this.dueDate = dueDate;
         this.priority = priority;
+    }
+
+    public void linkSequence(UUID enrollmentId, UUID sequenceStepId) {
+        this.enrollmentId = enrollmentId;
+        this.sequenceStepId = sequenceStepId;
     }
 
     public void setDone(boolean done, Instant now) {

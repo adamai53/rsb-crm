@@ -11,7 +11,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 | 2. Authentification | Inscription, vérification e-mail, validation admin, JWT, rôles | ✅ |
 | 3. Référentiel | Entreprises, contacts, score, import CSV, recherche | ✅ |
 | 4. Ventes | Pipeline, leads, tâches, activités, escales | ✅ |
-| 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | à faire |
+| 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | ✅ |
 | 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | à faire |
 | 7. Données démo et polissage UI | | à faire |
 | 8. Production | Compose prod, Nginx + HTTPS, scripts VPS, sauvegardes, déploiement | à faire |
@@ -65,6 +65,13 @@ pointez-le vers le pipe de Docker Desktop :
 
 ```bash
 export DOCKER_HOST=npipe:////./pipe/dockerDesktopLinuxEngine
+```
+
+Sans Docker, les tests peuvent viser une base PostgreSQL **vide** (15 ou plus, avec `pg_trgm`), à recréer entre deux
+exécutions :
+
+```bash
+TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/crmtest TEST_DB_USER=rsbcrm ./mvnw verify
 ```
 
 ### Frontend
@@ -146,6 +153,25 @@ Les migrations Flyway (`backend/src/main/resources/db/migration`) sont appliqué
   son contact et de son entreprise. Pastilles de la barre latérale : leads à traiter, tâches dues.
 - **Escales** (`/calls`) : frise de charge sur 21 jours et liste des navires attendus (hors transactions perdues),
   calculées sur la date de Djibouti.
+
+## Devis et e-mails
+
+- **Devis** (`/quotes`, onglet de la fiche transaction) : numéro annuel `RSB-Q-AAAA-NNNN`, validité 48 h, barge 1 450 USD
+  par défaut, aperçu et PDF (OpenPDF). Pas de devis sur une transaction clôturée.
+- **Envoi** : e-mail réel avec le PDF en pièce jointe ; transaction amenée au moins à « Cotation », activité e-mail.
+  Si le SMTP échoue, le devis et la transaction ne changent pas et l'échec est tracé (`sent_emails`, statut `ERREUR`).
+- **Acceptation** : le prix du devis devient celui de la transaction, étape « Nomination confirmée ».
+  Un devis expiré ne peut plus être accepté ; un job horaire passe les devis envoyés dépassés en « Expiré ».
+- **Modèles** : champs `{{prenom}}`, `{{entreprise}}`, `{{navire}}`, `{{produit}}`, `{{quantite}}`, `{{eta}}`,
+  `{{commercial}}` ; modification réservée à l'ADMIN.
+- **Suivi d'ouverture** : pixel public `/api/public/t/{id}.png`. Indicatif : certains clients bloquent les images,
+  d'autres les préchargent.
+- **Séquence « Relance cotation »** : l'inscription crée 4 tâches (J0, J+2, J+4, J+6) pour le commercial du contact.
+  L'envoi automatique des étapes e-mail est **désactivé par défaut** (case à cocher, MANAGER ou ADMIN) : chaque étape
+  n'est tentée qu'une fois, un échec laisse la tâche ouverte.
+
+Limite connue : le modèle « Envoi de cotation » dit « ci-joint », mais l'envoi automatique de la séquence ne joint
+pas de devis. Avant d'activer l'envoi automatique, adaptez ce modèle ou envoyez la cotation depuis le devis.
 
 ## Variables d'environnement
 

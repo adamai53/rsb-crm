@@ -23,6 +23,13 @@ spring:
     properties:
       mail.smtp.auth: ${SMTP_AUTH:false}
       mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      # Un serveur SMTP muet ne doit pas bloquer une requête indéfiniment
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 20000
+      mail.smtp.writetimeout: 30000
+      # Évitent une résolution DNS inverse de la machine (EHLO et Message-ID), lente selon le réseau
+      mail.smtp.localhost: ${SMTP_HELO_HOST:localhost}
+      mail.from: ${MAIL_FROM:crm@redseabunkering.com}
   servlet:
     multipart:
       max-file-size: 5MB

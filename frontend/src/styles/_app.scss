@@ -118,3 +118,13 @@ tbody tr.row:focus-visible td { background: var(--sea-soft); }
 .datebox.hidden-box { visibility: hidden; }
 .imo { display: inline !important; font-weight: 400; margin-left: 4px; }
 .call-qty { text-align: right; }
+
+/* ---------- Devis et e-mails (étape 5) ---------- */
+.attach-note { margin: 0 22px; font-size: 12.5px; }
+.enrolled { margin-top: 12px; }
+.enrolled .chip { display: inline-flex; align-items: center; gap: 6px; cursor: default; }
+.chip-x { background: none; border: 0; padding: 0 2px; cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
+.chip-x:hover { color: var(--bad); }
+.seq-actions { margin-top: 12px; align-items: center; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.check input { accent-color: var(--accent); }

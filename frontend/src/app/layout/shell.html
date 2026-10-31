@@ -72,5 +72,11 @@
     @case ('task') { <rsb-task-form [dealId]="$any(f).dealId" [contactId]="$any(f).contactId" /> }
     @case ('lead') { <rsb-lead-form /> }
     @case ('lost') { <rsb-lost-reason-modal [dealId]="$any(f).dealId" [vesselName]="$any(f).vesselName" /> }
+    @case ('quote-new') { <rsb-quote-new-modal [dealId]="$any(f).dealId" /> }
+    @case ('quote') { <rsb-quote-modal [id]="$any(f).id" /> }
+    @case ('quote-send') { <rsb-quote-send-modal [id]="$any(f).id" /> }
+    @case ('compose') { <rsb-compose-modal [contactId]="$any(f).contactId" [dealId]="$any(f).dealId" [templateId]="$any(f).templateId" /> }
+    @case ('enroll') { <rsb-enroll-modal [contactId]="$any(f).contactId" /> }
+    @case ('template') { <rsb-template-modal [id]="$any(f).id" /> }
   }
 }

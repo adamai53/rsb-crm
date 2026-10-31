@@ -33,10 +33,13 @@ type Tab = 'activity' | 'deals' | 'tasks' | 'score';
             <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'contact', id: d.contact.id })">Modifier</button>
           }
           @if (d.contact.email) {
-            <a class="btn sm" [href]="'mailto:' + d.contact.email">Écrire un e-mail</a>
+            <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'compose', contactId: d.contact.id })">Envoyer un e-mail</button>
           }
           <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'deal', contactId: d.contact.id })">Nouvelle transaction</button>
           <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'task', contactId: d.contact.id })">Nouvelle tâche</button>
+          @if (d.editable) {
+            <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'enroll', contactId: d.contact.id })">Inscrire en séquence</button>
+          }
           @if (d.editable) {
             <button class="btn sm danger" type="button" (click)="remove()">Supprimer</button>
           }

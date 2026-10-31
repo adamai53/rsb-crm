@@ -17,6 +17,12 @@ import { DealForm } from '../features/deals/deal-form';
 import { LostReasonModal } from '../features/deals/lost-reason-modal';
 import { LeadDrawer } from '../features/inbox/lead-drawer';
 import { LeadForm } from '../features/inbox/lead-form';
+import { ComposeModal } from '../features/emails/compose-modal';
+import { EnrollModal } from '../features/emails/enroll-modal';
+import { TemplateModal } from '../features/emails/template-modal';
+import { QuoteModal } from '../features/quotes/quote-modal';
+import { QuoteNewModal } from '../features/quotes/quote-new-modal';
+import { QuoteSendModal } from '../features/quotes/quote-send-modal';
 import { TaskForm } from '../features/tasks/task-form';
 import { SalesApi } from '../core/api/sales';
 import { GlobalSearch } from './global-search';
@@ -29,7 +35,8 @@ import { GlobalSearch } from './global-search';
   selector: 'rsb-shell',
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, GlobalSearch, ContactDrawer, CompanyDrawer, DealDrawer, LeadDrawer,
-    ContactForm, CompanyForm, DealForm, TaskForm, LeadForm, LostReasonModal,
+    ContactForm, CompanyForm, DealForm, TaskForm, LeadForm, LostReasonModal, QuoteModal, QuoteNewModal, QuoteSendModal,
+    ComposeModal, EnrollModal, TemplateModal,
   ],
   templateUrl: './shell.html',
   host: { class: 'app' },

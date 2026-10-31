@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 
 import { errorMessage } from '../../core/api-error';
 import { AuthService } from '../../core/auth/auth.service';
+import { DocumentsApi, QUOTE_STATUS, Quote } from '../../core/api/documents';
 import { DealDetail, SalesApi } from '../../core/api/sales';
 import { fmtDateY, fmtMT, fmtN, fmtUSD, rel } from '../../core/format';
 import { ReferenceService } from '../../core/reference.service';
@@ -31,6 +32,12 @@ type Tab = 'activity' | 'tasks' | 'quotes';
           }
         </span>
         <ng-container actions>
+          @if (dd.editable && !d.won && !d.lost) {
+            <button class="btn sm primary" type="button" (click)="ui.openForm({ kind: 'quote-new', dealId: d.id })">Générer un devis</button>
+          }
+          @if (d.contactId) {
+            <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'compose', contactId: d.contactId, dealId: d.id })">Envoyer un e-mail</button>
+          }
           <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'task', dealId: d.id })">Nouvelle tâche</button>
           @if (dd.editable) {
             <button class="btn sm" type="button" (click)="ui.openForm({ kind: 'deal', id: d.id })">Modifier</button>
@@ -80,7 +87,19 @@ type Tab = 'activity' | 'tasks' | 'quotes';
               @for (t of dd.tasks; track t.id) { <rsb-task-item [task]="t" /> } @empty { <p class="empty">Aucune tâche.</p> }
             </div>
           }
-          @case ('quotes') { <p class="empty">Les devis PDF arrivent avec le module Devis et e-mails (étape 5).</p> }
+          @case ('quotes') {
+            <div class="list">
+              @for (q of quotes(); track q.id) {
+                <div class="li">
+                  <div class="grow">
+                    <b><button class="lnk" type="button" (click)="ui.openForm({ kind: 'quote', id: q.id })">{{ q.number }}</button></b>
+                    <span>{{ fmtN(q.priceUsdPerMt) }} USD/MT · total {{ fmtUSD(q.totalUsd) }}</span>
+                  </div>
+                  <span [class]="'pill ' + quoteStatus[q.status].cls">{{ quoteStatus[q.status].label }}</span>
+                </div>
+              } @empty { <p class="empty">Aucun devis.</p> }
+            </div>
+          }
         }
       </rsb-drawer>
     }
@@ -90,6 +109,7 @@ export class DealDrawer {
   readonly id = input.required<string>();
 
   private readonly api = inject(SalesApi);
+  private readonly documents = inject(DocumentsApi);
   private readonly auth = inject(AuthService);
   private readonly ref = inject(ReferenceService);
   private readonly toast = inject(ToastService);
@@ -105,6 +125,8 @@ export class DealDrawer {
   protected readonly fmtUSD = fmtUSD;
   protected readonly rel = rel;
 
+  protected readonly quoteStatus = QUOTE_STATUS;
+  protected readonly quotes = signal<Quote[]>([]);
   protected readonly detail = signal<DealDetail | null>(null);
   protected readonly tab = signal<Tab>('activity');
   protected readonly gradeLabel = computed(() => {
@@ -114,7 +136,7 @@ export class DealDrawer {
   protected readonly tabs = computed(() => [
     { id: 'activity' as Tab, label: 'Activité' },
     { id: 'tasks' as Tab, label: `Tâches · ${this.detail()?.tasks.filter((t) => !t.done).length ?? 0}` },
-    { id: 'quotes' as Tab, label: 'Devis' },
+    { id: 'quotes' as Tab, label: `Devis · ${this.quotes().length}` },
   ]);
 
   constructor() {
@@ -129,6 +151,7 @@ export class DealDrawer {
           next: (d) => this.detail.set(d),
           error: () => this.ui.closeRecord(),
         });
+        this.documents.quotes(id).subscribe((q) => this.quotes.set(q));
       });
     });
   }

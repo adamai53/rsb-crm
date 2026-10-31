@@ -11,6 +11,8 @@ const READY: Record<string, Route['loadComponent']> = {
   deals: () => import('./features/deals/deals.page').then((m) => m.DealsPage),
   tasks: () => import('./features/tasks/tasks.page').then((m) => m.TasksPage),
   calls: () => import('./features/calls/calls.page').then((m) => m.CallsPage),
+  quotes: () => import('./features/quotes/quotes.page').then((m) => m.QuotesPage),
+  emails: () => import('./features/emails/emails.page').then((m) => m.EmailsPage),
 };
 
 const moduleRoutes: Routes = NAV.flatMap((group) => group.items).map((item) => ({

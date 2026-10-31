@@ -160,11 +160,11 @@ public class DealService {
         deals.delete(deal);
     }
 
-    Deal get(UUID id) {
+    public Deal get(UUID id) {
         return deals.findById(id).orElseThrow(DealService::notFound);
     }
 
-    PipelineStage stage(String code) {
+    public PipelineStage stage(String code) {
         return stages.findByCode(code).orElseThrow(() -> ApiException.badRequest("Étape inconnue : " + code));
     }
 
