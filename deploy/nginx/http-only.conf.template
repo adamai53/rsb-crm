@@ -1,0 +1,9 @@
+# Démarrage sans certificat : répond seulement au défi Let's Encrypt et au healthcheck.
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location = /healthz { access_log off; default_type text/plain; return 200 "ok\n"; }
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { default_type text/plain; return 503 "Certificat HTTPS en attente.\n"; }
+}

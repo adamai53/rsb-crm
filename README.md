@@ -14,7 +14,7 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 | 5. Devis et e-mails | PDF, SMTP, modèles, séquences, suivi d'ouverture | ✅ |
 | 6. Marketing et rapports | Campagnes, formulaire public, tableau de bord, rapports | ✅ |
 | 7. Données démo et polissage UI | | ✅ |
-| 8. Production | Compose prod, Nginx + HTTPS, scripts VPS, sauvegardes, déploiement | à faire |
+| 8. Production | Compose prod, Nginx + HTTPS, scripts VPS, sauvegardes, déploiement | Fichiers et tests prêts ; premier déploiement à faire |
 
 ## Arborescence
 
@@ -22,7 +22,8 @@ Le prototype `rsb-crm.html` sert de spécification fonctionnelle et visuelle.
 backend/    API Spring Boot (Java 21, Maven wrapper)
 frontend/   Application Angular (standalone, signals, routes lazy)
 deploy/     Docker Compose, configuration Nginx, scripts serveur, .env.example
-.github/    Intégration continue
+e2e/        Parcours de bout en bout (Playwright)
+.github/    Intégration continue et déploiement
 ```
 
 ## Démarrage rapide (tout en Docker)
@@ -196,8 +197,9 @@ dans **Campagnes & formulaires**. Il déduit la source du paramètre `utm_source
 | Champ piège | Un robot qui remplit le champ caché reçoit une réponse normale, sans lead créé. |
 
 Le proxy devant le backend doit écraser `X-Forwarded-For` avec l'adresse réelle du client, sinon la limitation de débit
-se contourne en falsifiant cet en-tête. `frontend/nginx.conf` le fait ; le proxy HTTPS de production devra transmettre
-l'adresse réelle.
+se contourne en falsifiant cet en-tête. `frontend/nginx.conf` et `deploy/nginx/https.conf.template` le font. Avec le proxy
+Cloudflare activé (nuage orange), Nginx verrait l'adresse de Cloudflare et tous les visiteurs partageraient la même limite :
+gardez l'enregistrement DNS en « DNS only », ou configurez `set_real_ip_from`.
 
 ## Données de démonstration
 
@@ -216,6 +218,94 @@ Activées par `APP_SEED_DEMO=true` (ou le profil Spring `demo`), jamais en produ
 - **Garde-fous** : le chargement n'a lieu que sur une base métier vide, et la réinitialisation est refusée si la base n'a
   pas été remplie par la démo, même avec `APP_SEED_DEMO=true`.
 
+## Tests de bout en bout
+
+`e2e/` déroule le parcours démo dans un vrai navigateur : formulaire public → conversion → devis envoyé → accepté → livré,
+et échoue sur toute violation de la CSP. Il lui faut une stack avec les données de démo et un serveur SMTP de test.
+
+```bash
+cd e2e
+npm ci
+E2E_BASE_URL=http://localhost:8081 E2E_LEAD_API_KEY=dev-lead-key E2E_CHANNEL=chrome npx playwright test
+```
+
+En CI, le job `stack` lance `deploy/scripts/smoke-test.sh` : stack de production construite avec PostgreSQL 16, HTTPS
+auto-signé, contrôle des en-têtes et des routes exposées, ce parcours, puis sauvegarde et restauration. Ce script écrit
+`deploy/.env` : il est réservé à une machine jetable.
+
+## Mise en production
+
+Architecture : `proxy` (Nginx, seuls ports publiés 80 et 443) → `frontend` et `backend` → `db` (réseau interne, sans accès
+Internet). `certbot` renouvelle le certificat. `/actuator` et Swagger ne passent pas par le proxy.
+
+### 1. Préparer le serveur (Ubuntu 24.04)
+
+Connecté en root **par clé SSH** :
+
+```bash
+git clone https://github.com/adamai53/rsb-crm.git /opt/rsb-crm
+bash /opt/rsb-crm/deploy/scripts/setup-vps.sh deploy
+```
+
+Le script s'arrête s'il ne trouve aucune clé. Il crée l'utilisateur `deploy` (sudo sans mot de passe, groupe docker), installe
+Docker, UFW (22, 80, 443) et fail2ban, programme la sauvegarde de 2 h 30, puis désactive root et les mots de passe SSH.
+**Vérifiez `ssh deploy@<ip>` dans un autre terminal avant de fermer la session.** Ensuite, connecté en `deploy` :
+`sudo chown -R deploy:deploy /opt/rsb-crm`.
+
+Dépôt privé : ajoutez au serveur une clé de déploiement GitHub en lecture seule, et clonez en SSH.
+
+### 2. DNS et configuration
+
+- Enregistrement A `crm.redseabunkering.com` → IP du VPS (Cloudflare : « DNS only »).
+- `cp deploy/.env.example deploy/.env`, puis `chmod 600 deploy/.env` et remplacer chaque valeur. `deploy.sh` refuse de
+  démarrer s'il reste un `change-me`. Secrets : `openssl rand -base64 48` pour `JWT_SECRET`, `openssl rand -hex 24` pour
+  `POSTGRES_PASSWORD` et `APP_PUBLIC_LEAD_API_KEY`.
+- Laisser `APP_SEED_DEMO=false` en production réelle.
+
+### 3. Premier démarrage et certificat
+
+```bash
+deploy/scripts/deploy.sh                       # sans certificat, le proxy répond 503 en HTTP
+deploy/scripts/init-letsencrypt.sh --staging   # essai facultatif, sans quota
+deploy/scripts/init-letsencrypt.sh             # accepte les conditions de Let's Encrypt
+```
+
+Après un essai `--staging`, supprimez ce certificat avant de demander le vrai :
+`docker compose -f deploy/docker-compose.yml run --rm --entrypoint certbot certbot delete --cert-name <domaine>`.
+Sans images publiées sur GHCR, construisez-les d'abord : `docker compose -f deploy/docker-compose.yml build`.
+
+### 4. Déploiement automatique
+
+Chaque push sur `main` : tests, stack complète, images `ghcr.io/adamai53/rsb-crm-{backend,frontend}` (tags SHA et `latest`).
+Le déploiement SSH ne s'active qu'avec la variable de dépôt `DEPLOY_ENABLED=true` et ces secrets GitHub :
+
+| Secret | Valeur |
+|---|---|
+| `VPS_HOST` | IP ou nom du serveur |
+| `VPS_USER` | `deploy` |
+| `VPS_SSH_KEY` | Clé privée dédiée au déploiement, sa clé publique dans `authorized_keys` |
+| `VPS_KNOWN_HOSTS` | Sortie de `ssh-keyscan <serveur>`, à vérifier : protège contre un faux serveur |
+
+### 5. Exploitation
+
+| Besoin | Commande |
+|---|---|
+| Mise à jour manuelle | `git pull --ff-only && deploy/scripts/deploy.sh` |
+| Revenir à une version | `deploy/scripts/deploy.sh <sha>` |
+| Sauvegarde immédiate | `deploy/scripts/backup.sh` |
+| Restauration | `deploy/scripts/restore.sh /var/backups/rsb-crm/<fichier>.dump` |
+| État et journaux | `docker compose -f deploy/docker-compose.yml ps` · `logs -f backend` |
+
+- **Retour arrière** : Flyway ne défait pas les migrations. Si la version annulée en a appliqué une, le backend ancien peut
+  refuser de démarrer : restaurez alors la sauvegarde que `deploy.sh` a faite juste avant la mise à jour.
+- **Sauvegardes** : `pg_dump` vérifié, rétention de 14 jours (`/var/log/rsb-crm-backup.log`). Tant que `BACKUP_S3_BUCKET` est
+  vide, elles restent sur le serveur et ne protègent pas contre sa perte.
+- **Restauration** : vérifie le fichier, fait une copie de la base actuelle, restaure dans une base temporaire et ne remplace
+  la base qu'en cas de réussite.
+- **Supervision** : healthchecks Docker, journaux limités à 5 × 10 Mo par service. Pour être alerté d'une panne, ajoutez une
+  sonde externe (Uptime Kuma par exemple) sur `https://<domaine>/api/public/info`.
+- **Limites mémoire** : db 512 Mo, backend 1 Go, frontend 64 Mo, proxy et certbot 128 Mo. Prévoir un VPS d'au moins 2 Go.
+
 ## Variables d'environnement
 
 Voir [`deploy/.env.example`](deploy/.env.example). Aucun secret n'est versionné.
@@ -225,3 +315,4 @@ Voir [`deploy/.env.example`](deploy/.env.example). Aucun secret n'est versionné
 - Nom de domaine définitif (exemple utilisé : `crm.redseabunkering.com`).
 - Fournisseur SMTP de production.
 - Compte Cloudflare Turnstile pour le captcha du formulaire public (clés `CAPTCHA_SITE_KEY` et `CAPTCHA_SECRET`).
+- Adresse de contact Let's Encrypt (`LETSENCRYPT_EMAIL`) et stockage S3 pour la copie hors serveur des sauvegardes.

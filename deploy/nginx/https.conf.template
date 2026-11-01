@@ -1,0 +1,68 @@
+# Reverse proxy de production : / vers Angular, /api vers Spring Boot. /actuator et Swagger ne sont pas exposés.
+
+limit_req_zone $binary_remote_addr zone=auth:10m rate=60r/m;
+limit_req_status 429;
+
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location = /healthz { access_log off; default_type text/plain; return 200 "ok\n"; }
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / { return 301 https://${DOMAIN}$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:rsb:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    # À garder ici : un add_header dans un location annulerait tous ceux-ci
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "same-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    gzip on;
+    gzip_proxied any;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json application/problem+json image/svg+xml;
+
+    client_max_body_size 6m;
+
+    # Résolution à chaque requête : le backend et le frontend changent d'adresse quand on les recrée
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $backend http://backend:8080;
+    set $frontend http://frontend:80;
+
+    # Écrase X-Forwarded-For : le backend s'en sert pour limiter le débit par IP, le client ne doit pas pouvoir le falsifier
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port 443;
+
+    location /api/auth/ {
+        limit_req zone=auth burst=30 nodelay;
+        proxy_pass $backend;
+    }
+
+    location /api/ {
+        proxy_read_timeout 90s;
+        proxy_pass $backend;
+    }
+
+    location / {
+        proxy_pass $frontend;
+    }
+}

@@ -1,0 +1,131 @@
+# Production. À lancer depuis la racine du dépôt, avec deploy/.env rempli :
+#   docker compose -f deploy/docker-compose.yml up -d --wait
+# Mises à jour : deploy/scripts/deploy.sh. Seul le proxy est exposé (ports 80 et 443).
+name: rsb-crm
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?}
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      TZ: ${TZ:-Africa/Djibouti}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+    logging: *logging
+    restart: unless-stopped
+
+  backend:
+    image: ${IMAGE_REGISTRY:-ghcr.io/adamai53}/rsb-crm-backend:${IMAGE_TAG:-latest}
+    build: ../backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:?}
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-PT15M}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-P7D}
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:?}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:?}
+      APP_PUBLIC_URL: https://${DOMAIN:?}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://${DOMAIN}}
+      APP_SIGNUP_REQUIRES_APPROVAL: ${APP_SIGNUP_REQUIRES_APPROVAL:-true}
+      APP_SEED_DEMO: ${APP_SEED_DEMO:-false}
+      APP_DEMO_PASSWORD: ${APP_DEMO_PASSWORD:-}
+      APP_DEMO_REFERENCE_DATE: ${APP_DEMO_REFERENCE_DATE:-2026-10-04}
+      APP_PUBLIC_LEAD_API_KEY: ${APP_PUBLIC_LEAD_API_KEY:-}
+      CAPTCHA_SITE_KEY: ${CAPTCHA_SITE_KEY:-}
+      CAPTCHA_SECRET: ${CAPTCHA_SECRET:-}
+      PUBLIC_FORM_ALLOWED_ORIGINS: ${PUBLIC_FORM_ALLOWED_ORIGINS:-https://redseabunkering.com,https://www.redseabunkering.com}
+      PUBLIC_FORM_MAX_PER_IP: ${PUBLIC_FORM_MAX_PER_IP:-5}
+      SMTP_HOST: ${SMTP_HOST:?}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_HELO_HOST: ${DOMAIN:?}
+      MAIL_FROM: ${MAIL_FROM:?}
+      TZ: ${TZ:-Africa/Djibouti}
+    networks: [internal, edge]
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 1g
+    logging: *logging
+    restart: unless-stopped
+
+  frontend:
+    image: ${IMAGE_REGISTRY:-ghcr.io/adamai53}/rsb-crm-frontend:${IMAGE_TAG:-latest}
+    build: ../frontend
+    networks: [edge]
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 64m
+    logging: *logging
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:1.27-alpine
+    entrypoint: ["sh", "/etc/rsb/start.sh"]
+    environment:
+      DOMAIN: ${DOMAIN:?}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/rsb:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    networks: [edge]
+    depends_on:
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    mem_limit: 128m
+    logging: *logging
+    restart: unless-stopped
+
+  # Renouvelle le certificat ; le proxy recharge sa configuration toutes les 6 h et le prend en compte
+  certbot:
+    image: certbot/certbot:v4.0.0
+    entrypoint: ["sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $$!; done"]
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    networks: [edge]
+    mem_limit: 128m
+    logging: *logging
+    restart: unless-stopped
+
+networks:
+  # Base de données inaccessible depuis l'extérieur et depuis le proxy
+  internal:
+    internal: true
+  edge:
+
+volumes:
+  db-data:
+  letsencrypt:
+  certbot-www:

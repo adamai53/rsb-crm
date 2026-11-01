@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -35,16 +38,97 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - name: Tests unitaires
-        run: npx ng test --watch=false --browsers=ChromeHeadless
+        run: npm test -- --watch=false --browsers=ChromeHeadless
       - name: Build production
         run: npx ng build --configuration production
 
-  docker:
+  # Stack de production complète (PostgreSQL 16, proxy, HTTPS auto-signé), parcours e2e, sauvegarde et restauration
+  stack:
     runs-on: ubuntu-latest
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
-      - name: Build des images (sans push, étape 1)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Démarrage de la stack
+        run: deploy/scripts/smoke-test.sh up
+      - name: Parcours e2e
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: https://localhost
+          E2E_ADMIN_EMAIL: admin@rsb.local
+          E2E_ADMIN_PASSWORD: AdminRsb2026
+          E2E_LEAD_API_KEY: smoke-lead-key
         run: |
-          docker build -t rsb-crm-backend backend
-          docker build -t rsb-crm-frontend frontend
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Sauvegarde et restauration
+        run: deploy/scripts/smoke-test.sh restore
+      - name: Journaux en cas d'échec
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml logs --tail=200
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/test-results
+          if-no-files-found: ignore
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [stack]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rsb-crm-${{ matrix.image }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/rsb-crm-${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  # À activer une fois le VPS prêt : variable de dépôt DEPLOY_ENABLED=true
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    needs: [publish]
+    concurrency: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Déploiement SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "docker login ghcr.io -u ${{ github.actor }} --password-stdin \
+             && cd /opt/rsb-crm && git pull --ff-only \
+             && deploy/scripts/deploy.sh ${{ github.sha }}; rc=\$?; docker logout ghcr.io; exit \$rc"
